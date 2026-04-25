@@ -4,7 +4,11 @@ import pandas as pd
 
 
 def add_rolling(df: pd.DataFrame, windows: list[int] | None = None) -> pd.DataFrame:
-    """Add rolling power columns with causal windows and min_periods=1."""
+    """Add rolling power columns.
+
+    Rolling 30s and 60s are centered to match manual gold annotation logic.
+    Rolling 1s remains non-centered by definition.
+    """
     if windows is None:
         windows = [1, 30, 60]
 
@@ -13,5 +17,6 @@ def add_rolling(df: pd.DataFrame, windows: list[int] | None = None) -> pd.DataFr
 
     out = df.copy()
     for w in windows:
-        out[f"rolling_{w}s"] = out["power"].rolling(window=w, center=False, min_periods=1).mean()
+        is_centered = w in {30, 60}
+        out[f"rolling_{w}s"] = out["power"].rolling(window=w, center=is_centered, min_periods=1).mean()
     return out
