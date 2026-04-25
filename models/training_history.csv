@@ -1,2 +1,0 @@
-﻿timestamp_utc;sessions_count;effort_rows;sprint_rows;effort_accuracy;effort_precision;effort_recall;effort_f1;effort_start_delta_mae;effort_end_delta_mae;sprint_accuracy;sprint_precision;sprint_recall;sprint_f1;sprint_start_delta_mae;sprint_end_delta_mae
-2026-04-25T13:49:26.426381+00:00;5;95;13;0.8210526315789474;0.8505747126436781;0.9487179487179487;0.896969696969697;11.520259988048329;14.742335299886866;0.8461538461538461;0.8461538461538461;1.0;0.9166666666666666;3.9888762142072665;4.101651059310825

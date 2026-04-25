@@ -103,10 +103,7 @@ def _write_summary_md(summary_out: Path, effort_df: pd.DataFrame, sprint_df: pd.
     s_end = _extract_metric(metrics, "sprint_regressor_loso", "end_delta_mae")
 
     sessions_count = int(effort_df["session_id"].nunique()) if "session_id" in effort_df.columns else 0
-    diag = metrics.get("data_diagnostics", {}) if isinstance(metrics.get("data_diagnostics", {}), dict) else {}
-    effort_diag = diag.get("effort_class_stats", {}) if isinstance(diag.get("effort_class_stats", {}), dict) else {}
-    sprint_diag = diag.get("sprint_class_stats", {}) if isinstance(diag.get("sprint_class_stats", {}), dict) else {}
-    notes = metrics.get("training_notes", []) if isinstance(metrics.get("training_notes", []), list) else []
+    by_activity = metrics.get("by_activity", {}) if isinstance(metrics.get("by_activity", {}), dict) else {}
 
     content = (
         "# Training Summary\n\n"
@@ -125,26 +122,32 @@ def _write_summary_md(summary_out: Path, effort_df: pd.DataFrame, sprint_df: pd.
         f"- Start delta MAE (s): {_fmt_num(s_start)}\n"
         f"- End delta MAE (s): {_fmt_num(s_end)}\n"
     )
-    content += "\n## Diagnostica classi\n"
-    content += f"- Effort pos/neg: {effort_diag.get('positives', 0)}/{effort_diag.get('negatives', 0)}\n"
-    content += f"- Sprint pos/neg: {sprint_diag.get('positives', 0)}/{sprint_diag.get('negatives', 0)}\n"
+    content += "\n## Modelli Per Activity Type\n"
+    if not by_activity:
+        content += "- Nessun sotto-modello creato.\n"
+    else:
+        for activity, activity_metrics in sorted(by_activity.items()):
+            diag = activity_metrics.get("data_diagnostics", {}) if isinstance(activity_metrics.get("data_diagnostics", {}), dict) else {}
+            effort_diag = diag.get("effort_class_stats", {}) if isinstance(diag.get("effort_class_stats", {}), dict) else {}
+            sprint_diag = diag.get("sprint_class_stats", {}) if isinstance(diag.get("sprint_class_stats", {}), dict) else {}
+            notes = activity_metrics.get("training_notes", []) if isinstance(activity_metrics.get("training_notes", []), list) else []
 
-    if notes:
-        content += "\n## Note training\n"
-        for note in notes:
-            content += f"- {note}\n"
+            content += f"\n### {activity}\n"
+            content += f"- Effort pos/neg: {effort_diag.get('positives', 0)}/{effort_diag.get('negatives', 0)}\n"
+            content += f"- Sprint pos/neg: {sprint_diag.get('positives', 0)}/{sprint_diag.get('negatives', 0)}\n"
+            if notes:
+                for note in notes:
+                    content += f"- Nota: {note}\n"
 
     summary_out.write_text(content, encoding="utf-8")
 
 
 def _write_patterns_md(patterns_out: Path, metrics: dict) -> None:
     patterns_out.parent.mkdir(parents=True, exist_ok=True)
-    fi = metrics.get("feature_importance", {})
-    if not isinstance(fi, dict):
-        fi = {}
+    by_activity = metrics.get("by_activity", {}) if isinstance(metrics.get("by_activity", {}), dict) else {}
 
     lines: list[str] = ["# Patterns Found by Model", ""]
-    lines.append("Questo file mostra le feature che il modello usa di piu (importanza).")
+    lines.append("Questo file mostra le feature che il modello usa di piu (importanza), separate per activity type.")
     lines.append("Se compaiono pattern utili che non stavi guardando, puoi annotarli e inserirli nel processo.")
     lines.append("")
 
@@ -157,22 +160,29 @@ def _write_patterns_md(patterns_out: Path, metrics: dict) -> None:
         ("sprint_end_regressor", "Sprint - Correzione End"),
     ]
 
-    for key, title in sections:
-        lines.append(f"## {title}")
-        values = fi.get(key, [])
-        if not values:
-            lines.append("- n/a")
-            lines.append("")
-            continue
-        for item in values[:10]:
-            feature = item.get("feature", "unknown")
-            importance = item.get("importance", 0.0)
-            try:
-                score = float(importance)
-            except (TypeError, ValueError):
-                score = 0.0
-            lines.append(f"- {feature}: {score:.4f}")
-        lines.append("")
+    if not by_activity:
+        lines.append("- Nessun pattern disponibile.")
+    else:
+        for activity, activity_metrics in sorted(by_activity.items()):
+            lines.append(f"## Activity: {activity}")
+            fi = activity_metrics.get("feature_importance", {}) if isinstance(activity_metrics.get("feature_importance", {}), dict) else {}
+
+            for key, title in sections:
+                lines.append(f"### {title}")
+                values = fi.get(key, [])
+                if not values:
+                    lines.append("- n/a")
+                    lines.append("")
+                    continue
+                for item in values[:10]:
+                    feature = item.get("feature", "unknown")
+                    importance = item.get("importance", 0.0)
+                    try:
+                        score = float(importance)
+                    except (TypeError, ValueError):
+                        score = 0.0
+                    lines.append(f"- {feature}: {score:.4f}")
+                lines.append("")
 
     patterns_out.write_text("\n".join(lines), encoding="utf-8")
 

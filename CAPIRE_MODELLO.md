@@ -28,6 +28,11 @@ Nota importante sui parametri di detect:
 - Allena i modelli.
 - Salva metriche, storico e modelli finali.
 
+Nota su activity_type:
+- Il training ora e separato per tipo attivita.
+- Vengono creati modelli distinti per: road, freeride, criterium, itt, ttt, training.
+- Ogni tipo ha la sua cartella sotto models.
+
 ## File creati e cosa contengono
 
 ### data/processed/archive_validation_report.json
@@ -131,21 +136,21 @@ Cosa contiene:
 Come usarlo:
 - Se vedi feature importanti che non stavi considerando a occhio, puoi annotarle e inserirle nel tuo processo.
 
-### models/classifier/*.joblib
+### models/<activity_type>/classifier/*.joblib
 A cosa serve:
-- Modelli di classificazione (tenere/scartare).
+- Modelli di classificazione (tenere/scartare) separati per activity_type.
 
 File tipici:
 - effort_keep_xgb.joblib
 - sprint_keep_xgb.joblib
 
 Cosa c'e dentro:
-- modello XGBoost addestrato
+- modello XGBoost addestrato sul solo activity_type specifico
 - lista colonne usate in training
 
-### models/regressor/*.joblib
+### models/<activity_type>/regressor/*.joblib
 A cosa serve:
-- Modelli di correzione boundary (start/end).
+- Modelli di correzione boundary (start/end) separati per activity_type.
 
 File tipici:
 - effort_start_delta_xgb.joblib
@@ -154,7 +159,7 @@ File tipici:
 - sprint_end_delta_xgb.joblib
 
 Cosa c'e dentro:
-- modello XGBoost regressione
+- modello XGBoost regressione sul solo activity_type specifico
 - lista colonne usate in training
 
 ## Come capire se il modello migliora davvero

@@ -17,6 +17,9 @@ class TrainArtifacts:
     saved_files: list[str]
 
 
+SUPPORTED_ACTIVITY_TYPES = ["road", "freeride", "criterium", "itt", "ttt", "training"]
+
+
 def _prepare_features(df: pd.DataFrame, feature_cols: list[str]) -> pd.DataFrame:
     x = df.reindex(columns=feature_cols, fill_value=0).copy()
     if "activity_type" in x.columns:
@@ -59,6 +62,10 @@ def _scale_pos_weight(y: pd.Series) -> float:
     if pos == 0:
         return 1.0
     return float(max(1.0, neg / pos))
+
+
+def _mean_metric(values: list[float]) -> float:
+    return float(np.mean(values)) if values else 0.0
 
 
 def _loso_classifier_metrics(df: pd.DataFrame, feature_cols: list[str], target_col: str) -> dict[str, float]:
@@ -180,10 +187,9 @@ def train_from_frames(
 ) -> TrainArtifacts:
     model_root = Path(model_root)
     saved_files: list[str] = []
-    metrics: dict[str, Any] = {}
+    metrics: dict[str, Any] = {"by_activity": {}, "training_notes": []}
 
     effort_features = [
-        "activity_type",
         "cp",
         "weight",
         "duration_sec",
@@ -203,10 +209,17 @@ def train_from_frames(
         "trim_end_power_ratio",
         "extend_before_power_ratio",
         "extend_after_power_ratio",
+        "valley_count",
+        "valley_max_dur_sec",
+        "valley_time_ratio",
+        "overlap_count",
+        "max_overlap_ratio",
+        "contains_other_count",
+        "is_contained_by_other",
+        "gold_overlap_count",
     ]
 
     sprint_features = [
-        "activity_type",
         "cp",
         "weight",
         "duration_sec",
@@ -218,71 +231,136 @@ def train_from_frames(
         "end_idx",
     ]
 
-    metrics["feature_importance"] = {}
-    metrics["data_diagnostics"] = {
-        "effort_class_stats": _class_stats(effort_df, "keep_label"),
-        "sprint_class_stats": _class_stats(sprint_df, "keep_label"),
+    effort_acc_values: list[float] = []
+    effort_prec_values: list[float] = []
+    effort_rec_values: list[float] = []
+    effort_f1_values: list[float] = []
+    effort_start_mae_values: list[float] = []
+    effort_end_mae_values: list[float] = []
+
+    sprint_acc_values: list[float] = []
+    sprint_prec_values: list[float] = []
+    sprint_rec_values: list[float] = []
+    sprint_f1_values: list[float] = []
+    sprint_start_mae_values: list[float] = []
+    sprint_end_mae_values: list[float] = []
+
+    effort_types = set(effort_df.get("activity_type", pd.Series(dtype=str)).dropna().astype(str).str.lower().tolist())
+    sprint_types = set(sprint_df.get("activity_type", pd.Series(dtype=str)).dropna().astype(str).str.lower().tolist())
+    all_types = sorted(effort_types | sprint_types | set(SUPPORTED_ACTIVITY_TYPES))
+
+    for activity in all_types:
+        effort_sub = effort_df[effort_df.get("activity_type", pd.Series(dtype=str)).astype(str).str.lower() == activity].copy()
+        sprint_sub = sprint_df[sprint_df.get("activity_type", pd.Series(dtype=str)).astype(str).str.lower() == activity].copy()
+
+        has_data = (not effort_sub.empty) or (not sprint_sub.empty)
+        if not has_data:
+            continue
+
+        activity_metrics: dict[str, Any] = {
+            "data_diagnostics": {
+                "effort_class_stats": _class_stats(effort_sub, "keep_label"),
+                "sprint_class_stats": _class_stats(sprint_sub, "keep_label"),
+            },
+            "feature_importance": {},
+            "training_notes": [],
+        }
+        activity_root = model_root / activity
+
+        if not effort_sub.empty:
+            cls_metrics = _loso_classifier_metrics(effort_sub, effort_features, "keep_label")
+            activity_metrics["effort_classifier_loso"] = cls_metrics
+            effort_acc_values.append(float(cls_metrics.get("accuracy", 0.0)))
+            effort_prec_values.append(float(cls_metrics.get("precision", 0.0)))
+            effort_rec_values.append(float(cls_metrics.get("recall", 0.0)))
+            effort_f1_values.append(float(cls_metrics.get("f1", 0.0)))
+
+            if effort_sub["keep_label"].nunique() >= 2:
+                effort_cls_path = activity_root / "classifier" / "effort_keep_xgb.joblib"
+                effort_cls_importance = _fit_and_save_classifier(effort_sub, effort_features, "keep_label", effort_cls_path)
+                saved_files.append(str(effort_cls_path))
+                activity_metrics["feature_importance"]["effort_classifier"] = effort_cls_importance
+            else:
+                activity_metrics["training_notes"].append("Effort classifier non addestrato: keep_label mono-classe")
+                activity_metrics["feature_importance"]["effort_classifier"] = []
+
+            effort_pos = effort_sub[effort_sub["keep_label"] == 1].copy()
+            if len(effort_pos) >= 5:
+                start_mae = _loso_regressor_mae(effort_pos, effort_features, "start_delta_sec")
+                end_mae = _loso_regressor_mae(effort_pos, effort_features, "end_delta_sec")
+                activity_metrics["effort_regressor_loso"] = {"start_delta_mae": start_mae, "end_delta_mae": end_mae}
+                effort_start_mae_values.append(float(start_mae))
+                effort_end_mae_values.append(float(end_mae))
+
+                start_path = activity_root / "regressor" / "effort_start_delta_xgb.joblib"
+                end_path = activity_root / "regressor" / "effort_end_delta_xgb.joblib"
+                effort_start_importance = _fit_and_save_regressor(effort_pos, effort_features, "start_delta_sec", start_path)
+                effort_end_importance = _fit_and_save_regressor(effort_pos, effort_features, "end_delta_sec", end_path)
+                saved_files.extend([str(start_path), str(end_path)])
+                activity_metrics["feature_importance"]["effort_start_regressor"] = effort_start_importance
+                activity_metrics["feature_importance"]["effort_end_regressor"] = effort_end_importance
+            else:
+                activity_metrics["effort_regressor_loso"] = {"start_delta_mae": None, "end_delta_mae": None}
+                activity_metrics["training_notes"].append("Effort regressori non addestrati: campioni positivi insufficienti (<5)")
+
+        if not sprint_sub.empty:
+            sprint_cls_metrics = _loso_classifier_metrics(sprint_sub, sprint_features, "keep_label")
+            activity_metrics["sprint_classifier_loso"] = sprint_cls_metrics
+            sprint_acc_values.append(float(sprint_cls_metrics.get("accuracy", 0.0)))
+            sprint_prec_values.append(float(sprint_cls_metrics.get("precision", 0.0)))
+            sprint_rec_values.append(float(sprint_cls_metrics.get("recall", 0.0)))
+            sprint_f1_values.append(float(sprint_cls_metrics.get("f1", 0.0)))
+
+            if sprint_sub["keep_label"].nunique() >= 2:
+                sprint_cls_path = activity_root / "classifier" / "sprint_keep_xgb.joblib"
+                sprint_cls_importance = _fit_and_save_classifier(sprint_sub, sprint_features, "keep_label", sprint_cls_path)
+                saved_files.append(str(sprint_cls_path))
+                activity_metrics["feature_importance"]["sprint_classifier"] = sprint_cls_importance
+            else:
+                activity_metrics["training_notes"].append("Sprint classifier non addestrato: keep_label mono-classe")
+                activity_metrics["feature_importance"]["sprint_classifier"] = []
+
+            sprint_pos = sprint_sub[sprint_sub["keep_label"] == 1].copy()
+            if len(sprint_pos) >= 5:
+                start_mae = _loso_regressor_mae(sprint_pos, sprint_features, "start_delta_sec")
+                end_mae = _loso_regressor_mae(sprint_pos, sprint_features, "end_delta_sec")
+                activity_metrics["sprint_regressor_loso"] = {"start_delta_mae": start_mae, "end_delta_mae": end_mae}
+                sprint_start_mae_values.append(float(start_mae))
+                sprint_end_mae_values.append(float(end_mae))
+
+                start_path = activity_root / "regressor" / "sprint_start_delta_xgb.joblib"
+                end_path = activity_root / "regressor" / "sprint_end_delta_xgb.joblib"
+                sprint_start_importance = _fit_and_save_regressor(sprint_pos, sprint_features, "start_delta_sec", start_path)
+                sprint_end_importance = _fit_and_save_regressor(sprint_pos, sprint_features, "end_delta_sec", end_path)
+                saved_files.extend([str(start_path), str(end_path)])
+                activity_metrics["feature_importance"]["sprint_start_regressor"] = sprint_start_importance
+                activity_metrics["feature_importance"]["sprint_end_regressor"] = sprint_end_importance
+            else:
+                activity_metrics["sprint_regressor_loso"] = {"start_delta_mae": None, "end_delta_mae": None}
+                activity_metrics["training_notes"].append("Sprint regressori non addestrati: campioni positivi insufficienti (<5)")
+
+        metrics["by_activity"][activity] = activity_metrics
+
+    # Global rollup (media semplice tra activity disponibili) per mantenere compatibilità report.
+    metrics["effort_classifier_loso"] = {
+        "accuracy": _mean_metric(effort_acc_values),
+        "precision": _mean_metric(effort_prec_values),
+        "recall": _mean_metric(effort_rec_values),
+        "f1": _mean_metric(effort_f1_values),
     }
-    metrics["training_notes"] = []
-
-    if not effort_df.empty:
-        cls_metrics = _loso_classifier_metrics(effort_df, effort_features, "keep_label")
-        metrics["effort_classifier_loso"] = cls_metrics
-
-        if effort_df["keep_label"].nunique() >= 2:
-            effort_cls_path = model_root / "classifier" / "effort_keep_xgb.joblib"
-            effort_cls_importance = _fit_and_save_classifier(effort_df, effort_features, "keep_label", effort_cls_path)
-            saved_files.append(str(effort_cls_path))
-            metrics["feature_importance"]["effort_classifier"] = effort_cls_importance
-        else:
-            metrics["training_notes"].append("Effort classifier non addestrato: keep_label mono-classe")
-            metrics["feature_importance"]["effort_classifier"] = []
-
-        effort_pos = effort_df[effort_df["keep_label"] == 1].copy()
-        if len(effort_pos) >= 5:
-            start_mae = _loso_regressor_mae(effort_pos, effort_features, "start_delta_sec")
-            end_mae = _loso_regressor_mae(effort_pos, effort_features, "end_delta_sec")
-            metrics["effort_regressor_loso"] = {"start_delta_mae": start_mae, "end_delta_mae": end_mae}
-
-            start_path = model_root / "regressor" / "effort_start_delta_xgb.joblib"
-            end_path = model_root / "regressor" / "effort_end_delta_xgb.joblib"
-            effort_start_importance = _fit_and_save_regressor(effort_pos, effort_features, "start_delta_sec", start_path)
-            effort_end_importance = _fit_and_save_regressor(effort_pos, effort_features, "end_delta_sec", end_path)
-            saved_files.extend([str(start_path), str(end_path)])
-            metrics["feature_importance"]["effort_start_regressor"] = effort_start_importance
-            metrics["feature_importance"]["effort_end_regressor"] = effort_end_importance
-        else:
-            metrics["effort_regressor_loso"] = {"start_delta_mae": None, "end_delta_mae": None}
-            metrics["training_notes"].append("Effort regressori non addestrati: campioni positivi insufficienti (<5)")
-
-    if not sprint_df.empty:
-        sprint_cls_metrics = _loso_classifier_metrics(sprint_df, sprint_features, "keep_label")
-        metrics["sprint_classifier_loso"] = sprint_cls_metrics
-
-        if sprint_df["keep_label"].nunique() >= 2:
-            sprint_cls_path = model_root / "classifier" / "sprint_keep_xgb.joblib"
-            sprint_cls_importance = _fit_and_save_classifier(sprint_df, sprint_features, "keep_label", sprint_cls_path)
-            saved_files.append(str(sprint_cls_path))
-            metrics["feature_importance"]["sprint_classifier"] = sprint_cls_importance
-        else:
-            metrics["training_notes"].append("Sprint classifier non addestrato: keep_label mono-classe")
-            metrics["feature_importance"]["sprint_classifier"] = []
-
-        sprint_pos = sprint_df[sprint_df["keep_label"] == 1].copy()
-        if len(sprint_pos) >= 5:
-            start_mae = _loso_regressor_mae(sprint_pos, sprint_features, "start_delta_sec")
-            end_mae = _loso_regressor_mae(sprint_pos, sprint_features, "end_delta_sec")
-            metrics["sprint_regressor_loso"] = {"start_delta_mae": start_mae, "end_delta_mae": end_mae}
-
-            start_path = model_root / "regressor" / "sprint_start_delta_xgb.joblib"
-            end_path = model_root / "regressor" / "sprint_end_delta_xgb.joblib"
-            sprint_start_importance = _fit_and_save_regressor(sprint_pos, sprint_features, "start_delta_sec", start_path)
-            sprint_end_importance = _fit_and_save_regressor(sprint_pos, sprint_features, "end_delta_sec", end_path)
-            saved_files.extend([str(start_path), str(end_path)])
-            metrics["feature_importance"]["sprint_start_regressor"] = sprint_start_importance
-            metrics["feature_importance"]["sprint_end_regressor"] = sprint_end_importance
-        else:
-            metrics["sprint_regressor_loso"] = {"start_delta_mae": None, "end_delta_mae": None}
-            metrics["training_notes"].append("Sprint regressori non addestrati: campioni positivi insufficienti (<5)")
+    metrics["effort_regressor_loso"] = {
+        "start_delta_mae": _mean_metric(effort_start_mae_values) if effort_start_mae_values else None,
+        "end_delta_mae": _mean_metric(effort_end_mae_values) if effort_end_mae_values else None,
+    }
+    metrics["sprint_classifier_loso"] = {
+        "accuracy": _mean_metric(sprint_acc_values),
+        "precision": _mean_metric(sprint_prec_values),
+        "recall": _mean_metric(sprint_rec_values),
+        "f1": _mean_metric(sprint_f1_values),
+    }
+    metrics["sprint_regressor_loso"] = {
+        "start_delta_mae": _mean_metric(sprint_start_mae_values) if sprint_start_mae_values else None,
+        "end_delta_mae": _mean_metric(sprint_end_mae_values) if sprint_end_mae_values else None,
+    }
 
     return TrainArtifacts(metrics=metrics, saved_files=saved_files)
