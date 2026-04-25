@@ -55,6 +55,38 @@ def _safe_slice(df: pd.DataFrame, start_idx: int, end_idx: int) -> pd.DataFrame:
     return df.loc[start_idx:end_idx]
 
 
+def _run_length_max(mask: pd.Series) -> int:
+    max_run = 0
+    cur = 0
+    for value in mask.astype(bool).tolist():
+        if value:
+            cur += 1
+            if cur > max_run:
+                max_run = cur
+        else:
+            cur = 0
+    return int(max_run)
+
+
+def _valley_metrics(segment: pd.DataFrame, effort_avg_power: float) -> tuple[float, float, float]:
+    """Return (valley_count, valley_max_dur_sec, valley_time_ratio)."""
+    if segment.empty or "power" not in segment.columns or effort_avg_power <= 0:
+        return 0.0, 0.0, 0.0
+
+    low_mask = segment["power"] < (effort_avg_power * 0.65)
+    valley_max = float(_run_length_max(low_mask))
+    valley_ratio = float(low_mask.mean()) if len(low_mask) else 0.0
+
+    # Count transitions False->True
+    shifted = low_mask.shift(1, fill_value=False)
+    valley_count = float(((low_mask) & (~shifted)).sum())
+    return valley_count, valley_max, valley_ratio
+
+
+def _overlap_len(a_start: int, a_end: int, b_start: int, b_end: int) -> int:
+    return max(0, min(a_end, b_end) - max(a_start, b_start) + 1)
+
+
 def _build_effort_rows(triple: SessionTriple, iou_threshold: float) -> tuple[list[dict[str, Any]], list[str]]:
     warnings: list[str] = []
     default_payload = load_json(triple.default_json_path)
@@ -92,6 +124,22 @@ def _build_effort_rows(triple: SessionTriple, iou_threshold: float) -> tuple[lis
     extend_window = int(effort_cfg.get("extend_window", 0) or 0)
 
     rows: list[dict[str, Any]] = []
+    effort_ranges: list[tuple[int, int]] = [
+        (
+            int(item.get("start_idx", item.get("start_time_sec", 0))),
+            int(item.get("end_idx", item.get("end_time_sec", 0))),
+        )
+        for item in default_efforts
+    ]
+
+    gold_ranges: list[tuple[int, int]] = [
+        (
+            int(item.get("start_idx", item.get("start_time_sec", 0))),
+            int(item.get("end_idx", item.get("end_time_sec", 0))),
+        )
+        for item in gold_efforts
+    ]
+
     for e in default_efforts:
         start_idx = int(e.get("start_idx", e.get("start_time_sec", 0)))
         end_idx = int(e.get("end_idx", e.get("end_time_sec", 0)))
@@ -138,6 +186,32 @@ def _build_effort_rows(triple: SessionTriple, iou_threshold: float) -> tuple[lis
             else 0.0
         )
 
+        valley_count, valley_max_dur_sec, valley_time_ratio = _valley_metrics(segment, effort_avg_for_ratio)
+
+        overlap_count = 0
+        max_overlap_ratio = 0.0
+        contains_other_count = 0
+        is_contained_by_other = 0.0
+        for s2, e2 in effort_ranges:
+            if s2 == start_idx and e2 == end_idx:
+                continue
+            ov = _overlap_len(start_idx, end_idx, s2, e2)
+            if ov > 0:
+                overlap_count += 1
+                den = max(1, end_idx - start_idx + 1)
+                ov_ratio = ov / den
+                if ov_ratio > max_overlap_ratio:
+                    max_overlap_ratio = ov_ratio
+            if start_idx <= s2 and e2 <= end_idx and not (s2 == start_idx and e2 == end_idx):
+                contains_other_count += 1
+            if s2 <= start_idx and end_idx <= e2 and not (s2 == start_idx and e2 == end_idx):
+                is_contained_by_other = 1.0
+
+        gold_overlap_count = 0
+        for gs, ge in gold_ranges:
+            if _segment_iou(start_idx, end_idx, gs, ge) >= max(0.2, iou_threshold * 0.7):
+                gold_overlap_count += 1
+
         keep_label = 1 if matched is not None else 0
         start_delta = 0.0
         end_delta = 0.0
@@ -174,6 +248,14 @@ def _build_effort_rows(triple: SessionTriple, iou_threshold: float) -> tuple[lis
                 "trim_end_power_ratio": trim_end_power_ratio,
                 "extend_before_power_ratio": extend_before_power_ratio,
                 "extend_after_power_ratio": extend_after_power_ratio,
+                "valley_count": valley_count,
+                "valley_max_dur_sec": valley_max_dur_sec,
+                "valley_time_ratio": valley_time_ratio,
+                "overlap_count": float(overlap_count),
+                "max_overlap_ratio": float(max_overlap_ratio),
+                "contains_other_count": float(contains_other_count),
+                "is_contained_by_other": is_contained_by_other,
+                "gold_overlap_count": float(gold_overlap_count),
                 "keep_label": keep_label,
                 "start_delta_sec": start_delta,
                 "end_delta_sec": end_delta,

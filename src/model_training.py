@@ -35,6 +35,32 @@ def _top_feature_importance(model: Any, feature_columns: list[str], top_n: int =
     return [{"feature": name, "importance": float(score)} for name, score in top]
 
 
+def _class_stats(df: pd.DataFrame, target_col: str) -> dict[str, Any]:
+    if target_col not in df.columns or df.empty:
+        return {"rows": int(len(df)), "positives": 0, "negatives": 0, "pos_ratio": 0.0, "n_classes": 0}
+
+    y = df[target_col].astype(int)
+    pos = int((y == 1).sum())
+    neg = int((y == 0).sum())
+    n = int(len(y))
+    return {
+        "rows": n,
+        "positives": pos,
+        "negatives": neg,
+        "pos_ratio": float(pos / n) if n > 0 else 0.0,
+        "n_classes": int(y.nunique()),
+    }
+
+
+def _scale_pos_weight(y: pd.Series) -> float:
+    y_int = y.astype(int)
+    pos = int((y_int == 1).sum())
+    neg = int((y_int == 0).sum())
+    if pos == 0:
+        return 1.0
+    return float(max(1.0, neg / pos))
+
+
 def _loso_classifier_metrics(df: pd.DataFrame, feature_cols: list[str], target_col: str) -> dict[str, float]:
     sessions = sorted(df["session_id"].unique())
     y_true_all: list[int] = []
@@ -58,6 +84,7 @@ def _loso_classifier_metrics(df: pd.DataFrame, feature_cols: list[str], target_c
             learning_rate=0.05,
             subsample=0.9,
             colsample_bytree=0.9,
+            scale_pos_weight=_scale_pos_weight(train_df[target_col]),
             eval_metric="logloss",
             random_state=42,
         )
@@ -118,6 +145,7 @@ def _fit_and_save_classifier(df: pd.DataFrame, feature_cols: list[str], target_c
         learning_rate=0.05,
         subsample=0.9,
         colsample_bytree=0.9,
+        scale_pos_weight=_scale_pos_weight(y),
         eval_metric="logloss",
         random_state=42,
     )
@@ -191,15 +219,24 @@ def train_from_frames(
     ]
 
     metrics["feature_importance"] = {}
+    metrics["data_diagnostics"] = {
+        "effort_class_stats": _class_stats(effort_df, "keep_label"),
+        "sprint_class_stats": _class_stats(sprint_df, "keep_label"),
+    }
+    metrics["training_notes"] = []
 
     if not effort_df.empty:
         cls_metrics = _loso_classifier_metrics(effort_df, effort_features, "keep_label")
         metrics["effort_classifier_loso"] = cls_metrics
 
-        effort_cls_path = model_root / "classifier" / "effort_keep_xgb.joblib"
-        effort_cls_importance = _fit_and_save_classifier(effort_df, effort_features, "keep_label", effort_cls_path)
-        saved_files.append(str(effort_cls_path))
-        metrics["feature_importance"]["effort_classifier"] = effort_cls_importance
+        if effort_df["keep_label"].nunique() >= 2:
+            effort_cls_path = model_root / "classifier" / "effort_keep_xgb.joblib"
+            effort_cls_importance = _fit_and_save_classifier(effort_df, effort_features, "keep_label", effort_cls_path)
+            saved_files.append(str(effort_cls_path))
+            metrics["feature_importance"]["effort_classifier"] = effort_cls_importance
+        else:
+            metrics["training_notes"].append("Effort classifier non addestrato: keep_label mono-classe")
+            metrics["feature_importance"]["effort_classifier"] = []
 
         effort_pos = effort_df[effort_df["keep_label"] == 1].copy()
         if len(effort_pos) >= 5:
@@ -216,15 +253,20 @@ def train_from_frames(
             metrics["feature_importance"]["effort_end_regressor"] = effort_end_importance
         else:
             metrics["effort_regressor_loso"] = {"start_delta_mae": None, "end_delta_mae": None}
+            metrics["training_notes"].append("Effort regressori non addestrati: campioni positivi insufficienti (<5)")
 
     if not sprint_df.empty:
         sprint_cls_metrics = _loso_classifier_metrics(sprint_df, sprint_features, "keep_label")
         metrics["sprint_classifier_loso"] = sprint_cls_metrics
 
-        sprint_cls_path = model_root / "classifier" / "sprint_keep_xgb.joblib"
-        sprint_cls_importance = _fit_and_save_classifier(sprint_df, sprint_features, "keep_label", sprint_cls_path)
-        saved_files.append(str(sprint_cls_path))
-        metrics["feature_importance"]["sprint_classifier"] = sprint_cls_importance
+        if sprint_df["keep_label"].nunique() >= 2:
+            sprint_cls_path = model_root / "classifier" / "sprint_keep_xgb.joblib"
+            sprint_cls_importance = _fit_and_save_classifier(sprint_df, sprint_features, "keep_label", sprint_cls_path)
+            saved_files.append(str(sprint_cls_path))
+            metrics["feature_importance"]["sprint_classifier"] = sprint_cls_importance
+        else:
+            metrics["training_notes"].append("Sprint classifier non addestrato: keep_label mono-classe")
+            metrics["feature_importance"]["sprint_classifier"] = []
 
         sprint_pos = sprint_df[sprint_df["keep_label"] == 1].copy()
         if len(sprint_pos) >= 5:
@@ -241,5 +283,6 @@ def train_from_frames(
             metrics["feature_importance"]["sprint_end_regressor"] = sprint_end_importance
         else:
             metrics["sprint_regressor_loso"] = {"start_delta_mae": None, "end_delta_mae": None}
+            metrics["training_notes"].append("Sprint regressori non addestrati: campioni positivi insufficienti (<5)")
 
     return TrainArtifacts(metrics=metrics, saved_files=saved_files)

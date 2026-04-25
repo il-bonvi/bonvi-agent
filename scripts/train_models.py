@@ -103,6 +103,10 @@ def _write_summary_md(summary_out: Path, effort_df: pd.DataFrame, sprint_df: pd.
     s_end = _extract_metric(metrics, "sprint_regressor_loso", "end_delta_mae")
 
     sessions_count = int(effort_df["session_id"].nunique()) if "session_id" in effort_df.columns else 0
+    diag = metrics.get("data_diagnostics", {}) if isinstance(metrics.get("data_diagnostics", {}), dict) else {}
+    effort_diag = diag.get("effort_class_stats", {}) if isinstance(diag.get("effort_class_stats", {}), dict) else {}
+    sprint_diag = diag.get("sprint_class_stats", {}) if isinstance(diag.get("sprint_class_stats", {}), dict) else {}
+    notes = metrics.get("training_notes", []) if isinstance(metrics.get("training_notes", []), list) else []
 
     content = (
         "# Training Summary\n\n"
@@ -121,6 +125,15 @@ def _write_summary_md(summary_out: Path, effort_df: pd.DataFrame, sprint_df: pd.
         f"- Start delta MAE (s): {_fmt_num(s_start)}\n"
         f"- End delta MAE (s): {_fmt_num(s_end)}\n"
     )
+    content += "\n## Diagnostica classi\n"
+    content += f"- Effort pos/neg: {effort_diag.get('positives', 0)}/{effort_diag.get('negatives', 0)}\n"
+    content += f"- Sprint pos/neg: {sprint_diag.get('positives', 0)}/{sprint_diag.get('negatives', 0)}\n"
+
+    if notes:
+        content += "\n## Note training\n"
+        for note in notes:
+            content += f"- {note}\n"
+
     summary_out.write_text(content, encoding="utf-8")
 
 
