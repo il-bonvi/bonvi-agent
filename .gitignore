@@ -19,3 +19,4 @@ data/archive/
 data/processed/
 models/**/*.joblib
 models/training_metrics.json
+*.csv

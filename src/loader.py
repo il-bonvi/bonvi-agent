@@ -1,15 +1,24 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 import pandas as pd
 
 
-def _safe_field(record_data: list[dict[str, Any]], key: str) -> float | None:
+def _safe_field(record_data: Iterable[Any], key: str) -> float | None:
     for item in record_data:
-        if item.get("name") == key:
+        name: Any = None
+        value: Any = None
+
+        if isinstance(item, dict):
+            name = item.get("name")
             value = item.get("value")
+        else:
+            name = getattr(item, "name", None)
+            value = getattr(item, "value", None)
+
+        if name == key:
             if value is None:
                 return None
             try:

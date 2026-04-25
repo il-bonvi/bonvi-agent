@@ -33,6 +33,8 @@ echo COMPLETATO: modello aggiornato con successo.
 echo Report: data\processed\archive_validation_report.json
 echo Report: data\processed\dataset_build_report.json
 echo Metriche: models\training_metrics.json
+echo Storico: models\training_history.csv
+echo Sintesi leggibile: models\training_summary.md
 echo.
 pause
 exit /b 0

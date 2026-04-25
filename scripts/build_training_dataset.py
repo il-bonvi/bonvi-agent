@@ -38,8 +38,8 @@ def main() -> int:
     sprint_csv = args.out_dir / "sprint_training.csv"
     report_json = args.out_dir / "dataset_build_report.json"
 
-    result.effort_df.to_csv(effort_csv, index=False)
-    result.sprint_df.to_csv(sprint_csv, index=False)
+    result.effort_df.to_csv(effort_csv, index=False, sep=";", encoding="utf-8-sig")
+    result.sprint_df.to_csv(sprint_csv, index=False, sep=";", encoding="utf-8-sig")
 
     report = {
         "sessions_used": len(scan.sessions),
