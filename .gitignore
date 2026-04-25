@@ -15,8 +15,4 @@ PEFFORT/
 # Local training data (provided manually)
 data/archive/
 
-# Generated artifacts
-data/processed/
-models/**/*.joblib
-models/training_metrics.json
-*.csv
+# Keep generated artifacts versioned as backup in repo.

@@ -82,6 +82,14 @@ def _build_effort_rows(triple: SessionTriple, iou_threshold: float) -> tuple[lis
 
     default_efforts = default_payload.get("efforts", [])
     gold_efforts = gold_payload.get("efforts", [])
+    detection_parameters = default_payload.get("detection_parameters", {})
+    effort_cfg = detection_parameters.get("effort_config", {}) if isinstance(detection_parameters, dict) else {}
+
+    effort_window_seconds = float(effort_cfg.get("window_seconds", 0.0) or 0.0)
+    effort_min_cp_pct = float(effort_cfg.get("min_cp_pct", 0.0) or 0.0)
+    effort_merge_pct = float(effort_cfg.get("merge_pct", 0.0) or 0.0)
+    trim_window = int(effort_cfg.get("trim_window", 0) or 0)
+    extend_window = int(effort_cfg.get("extend_window", 0) or 0)
 
     rows: list[dict[str, Any]] = []
     for e in default_efforts:
@@ -99,6 +107,34 @@ def _build_effort_rows(triple: SessionTriple, iou_threshold: float) -> tuple[lis
         pct_above_cp = (
             float((segment["power"] >= cp).mean())
             if (cp > 0 and not segment.empty and "power" in segment.columns)
+            else 0.0
+        )
+
+        effort_avg_for_ratio = avg_power_w if avg_power_w > 0 else (float(segment["power"].mean()) if not segment.empty else 0.0)
+
+        trim_start_slice = _safe_slice(df, start_idx, start_idx + trim_window - 1) if trim_window > 0 else df.iloc[0:0]
+        trim_end_slice = _safe_slice(df, end_idx - trim_window + 1, end_idx) if trim_window > 0 else df.iloc[0:0]
+        extend_before_slice = _safe_slice(df, start_idx - extend_window, start_idx - 1) if extend_window > 0 else df.iloc[0:0]
+        extend_after_slice = _safe_slice(df, end_idx + 1, end_idx + extend_window) if extend_window > 0 else df.iloc[0:0]
+
+        trim_start_power_ratio = (
+            float(trim_start_slice["power"].mean()) / effort_avg_for_ratio
+            if (effort_avg_for_ratio > 0 and not trim_start_slice.empty and "power" in trim_start_slice.columns)
+            else 0.0
+        )
+        trim_end_power_ratio = (
+            float(trim_end_slice["power"].mean()) / effort_avg_for_ratio
+            if (effort_avg_for_ratio > 0 and not trim_end_slice.empty and "power" in trim_end_slice.columns)
+            else 0.0
+        )
+        extend_before_power_ratio = (
+            float(extend_before_slice["power"].mean()) / effort_avg_for_ratio
+            if (effort_avg_for_ratio > 0 and not extend_before_slice.empty and "power" in extend_before_slice.columns)
+            else 0.0
+        )
+        extend_after_power_ratio = (
+            float(extend_after_slice["power"].mean()) / effort_avg_for_ratio
+            if (effort_avg_for_ratio > 0 and not extend_after_slice.empty and "power" in extend_after_slice.columns)
             else 0.0
         )
 
@@ -129,6 +165,15 @@ def _build_effort_rows(triple: SessionTriple, iou_threshold: float) -> tuple[lis
                 "pct_above_cp": pct_above_cp,
                 "start_ratio": float(start_idx / ride_duration),
                 "end_ratio": float(end_idx / ride_duration),
+                "effort_window_seconds": effort_window_seconds,
+                "effort_min_cp_pct": effort_min_cp_pct,
+                "effort_merge_pct": effort_merge_pct,
+                "trim_window": float(trim_window),
+                "extend_window": float(extend_window),
+                "trim_start_power_ratio": trim_start_power_ratio,
+                "trim_end_power_ratio": trim_end_power_ratio,
+                "extend_before_power_ratio": extend_before_power_ratio,
+                "extend_after_power_ratio": extend_after_power_ratio,
                 "keep_label": keep_label,
                 "start_delta_sec": start_delta,
                 "end_delta_sec": end_delta,
@@ -150,6 +195,12 @@ def _build_sprint_rows(triple: SessionTriple, iou_threshold: float) -> list[dict
 
     default_sprints = default_payload.get("sprints", [])
     gold_sprints = gold_payload.get("sprints", [])
+    detection_parameters = default_payload.get("detection_parameters", {})
+    sprint_cfg = detection_parameters.get("sprint_config", {}) if isinstance(detection_parameters, dict) else {}
+
+    sprint_min_power = float(sprint_cfg.get("min_power", 0.0) or 0.0)
+    sprint_window_seconds = float(sprint_cfg.get("window_seconds", 0.0) or 0.0)
+    sprint_merge_gap_sec = float(sprint_cfg.get("merge_gap_sec", 0.0) or 0.0)
 
     rows: list[dict[str, Any]] = []
     for s in default_sprints:
@@ -176,6 +227,9 @@ def _build_sprint_rows(triple: SessionTriple, iou_threshold: float) -> list[dict
                 "weight": weight,
                 "duration_sec": duration_sec,
                 "avg_power_ratio": (avg_power_w / cp) if cp > 0 else 0.0,
+                "sprint_min_power_ratio": (sprint_min_power / cp) if cp > 0 else 0.0,
+                "sprint_window_seconds": sprint_window_seconds,
+                "sprint_merge_gap_sec": sprint_merge_gap_sec,
                 "start_idx": start_idx,
                 "end_idx": end_idx,
                 "keep_label": keep_label,

@@ -35,6 +35,7 @@ echo Report: data\processed\dataset_build_report.json
 echo Metriche: models\training_metrics.json
 echo Storico: models\training_history.csv
 echo Sintesi leggibile: models\training_summary.md
+echo Pattern trovati: models\patterns_found.md
 echo.
 pause
 exit /b 0

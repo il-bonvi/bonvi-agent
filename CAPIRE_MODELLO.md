@@ -18,6 +18,12 @@ Nota importante sulle medie usate dal modello:
 - avg60: usa contesto intorno al punto (circa 30s prima + 30s dopo).
 - Questa scelta allinea le feature al tuo criterio di annotazione nel file gold.
 
+Nota importante sui parametri di detect:
+- Il modello usa anche i parametri in detection_parameters del JSON default.
+- Effort: window_seconds, min_cp_pct, merge_pct, trim_window, extend_window.
+- Sprint: min_power, window_seconds, merge_gap_sec.
+- Inoltre usa feature di contesto trim/extend (rapporto potenza su inizio/fine effort e zone prima/dopo).
+
 3. Training
 - Allena i modelli.
 - Salva metriche, storico e modelli finali.
@@ -111,6 +117,19 @@ Cosa contiene:
 
 Consiglio:
 - Apri prima questo file, poi il JSON se vuoi dettaglio tecnico.
+
+### models/patterns_found.md
+A cosa serve:
+- Mostra i pattern piu forti che il modello sta usando (feature importance).
+
+Cosa contiene:
+- Top feature per effort keep/delete
+- Top feature per correzione start/end effort
+- Top feature per sprint keep/delete
+- Top feature per correzione start/end sprint
+
+Come usarlo:
+- Se vedi feature importanti che non stavi considerando a occhio, puoi annotarle e inserirle nel tuo processo.
 
 ### models/classifier/*.joblib
 A cosa serve:

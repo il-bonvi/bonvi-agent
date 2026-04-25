@@ -12,18 +12,21 @@ set R2=data\processed\dataset_build_report.json
 set R3=models\training_metrics.json
 set R4=models\training_history.csv
 set R5=models\training_summary.md
+set R6=models\patterns_found.md
 
 if not exist "%R1%" echo Manca: %R1%
 if not exist "%R2%" echo Manca: %R2%
 if not exist "%R3%" echo Manca: %R3%
 if not exist "%R4%" echo Manca: %R4%
 if not exist "%R5%" echo Manca: %R5%
+if not exist "%R6%" echo Manca: %R6%
 
 if exist "%R1%" start "" "%R1%"
 if exist "%R2%" start "" "%R2%"
 if exist "%R3%" start "" "%R3%"
 if exist "%R4%" start "" "%R4%"
 if exist "%R5%" start "" "%R5%"
+if exist "%R6%" start "" "%R6%"
 
 echo.
 echo Aperto tutto quello che era disponibile.

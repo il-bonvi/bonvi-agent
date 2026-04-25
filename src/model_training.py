@@ -18,10 +18,21 @@ class TrainArtifacts:
 
 
 def _prepare_features(df: pd.DataFrame, feature_cols: list[str]) -> pd.DataFrame:
-    x = df[feature_cols].copy()
+    x = df.reindex(columns=feature_cols, fill_value=0).copy()
     if "activity_type" in x.columns:
         x = pd.get_dummies(x, columns=["activity_type"], dummy_na=False)
     return x
+
+
+def _top_feature_importance(model: Any, feature_columns: list[str], top_n: int = 12) -> list[dict[str, float | str]]:
+    importances = getattr(model, "feature_importances_", None)
+    if importances is None:
+        return []
+
+    pairs = list(zip(feature_columns, importances.tolist()))
+    pairs.sort(key=lambda t: t[1], reverse=True)
+    top = pairs[:top_n]
+    return [{"feature": name, "importance": float(score)} for name, score in top]
 
 
 def _loso_classifier_metrics(df: pd.DataFrame, feature_cols: list[str], target_col: str) -> dict[str, float]:
@@ -97,7 +108,7 @@ def _loso_regressor_mae(df: pd.DataFrame, feature_cols: list[str], target_col: s
     return float(np.mean(maes)) if maes else 0.0
 
 
-def _fit_and_save_classifier(df: pd.DataFrame, feature_cols: list[str], target_col: str, out_path: Path) -> None:
+def _fit_and_save_classifier(df: pd.DataFrame, feature_cols: list[str], target_col: str, out_path: Path) -> list[dict[str, float | str]]:
     x = _prepare_features(df, feature_cols)
     y = df[target_col].astype(int)
 
@@ -113,9 +124,10 @@ def _fit_and_save_classifier(df: pd.DataFrame, feature_cols: list[str], target_c
     model.fit(x, y)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump({"model": model, "feature_columns": list(x.columns)}, out_path)
+    return _top_feature_importance(model, list(x.columns))
 
 
-def _fit_and_save_regressor(df: pd.DataFrame, feature_cols: list[str], target_col: str, out_path: Path) -> None:
+def _fit_and_save_regressor(df: pd.DataFrame, feature_cols: list[str], target_col: str, out_path: Path) -> list[dict[str, float | str]]:
     x = _prepare_features(df, feature_cols)
     y = df[target_col].astype(float)
 
@@ -130,6 +142,7 @@ def _fit_and_save_regressor(df: pd.DataFrame, feature_cols: list[str], target_co
     model.fit(x, y)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump({"model": model, "feature_columns": list(x.columns)}, out_path)
+    return _top_feature_importance(model, list(x.columns))
 
 
 def train_from_frames(
@@ -153,6 +166,15 @@ def train_from_frames(
         "pct_above_cp",
         "start_ratio",
         "end_ratio",
+        "effort_window_seconds",
+        "effort_min_cp_pct",
+        "effort_merge_pct",
+        "trim_window",
+        "extend_window",
+        "trim_start_power_ratio",
+        "trim_end_power_ratio",
+        "extend_before_power_ratio",
+        "extend_after_power_ratio",
     ]
 
     sprint_features = [
@@ -161,17 +183,23 @@ def train_from_frames(
         "weight",
         "duration_sec",
         "avg_power_ratio",
+        "sprint_min_power_ratio",
+        "sprint_window_seconds",
+        "sprint_merge_gap_sec",
         "start_idx",
         "end_idx",
     ]
+
+    metrics["feature_importance"] = {}
 
     if not effort_df.empty:
         cls_metrics = _loso_classifier_metrics(effort_df, effort_features, "keep_label")
         metrics["effort_classifier_loso"] = cls_metrics
 
         effort_cls_path = model_root / "classifier" / "effort_keep_xgb.joblib"
-        _fit_and_save_classifier(effort_df, effort_features, "keep_label", effort_cls_path)
+        effort_cls_importance = _fit_and_save_classifier(effort_df, effort_features, "keep_label", effort_cls_path)
         saved_files.append(str(effort_cls_path))
+        metrics["feature_importance"]["effort_classifier"] = effort_cls_importance
 
         effort_pos = effort_df[effort_df["keep_label"] == 1].copy()
         if len(effort_pos) >= 5:
@@ -181,9 +209,11 @@ def train_from_frames(
 
             start_path = model_root / "regressor" / "effort_start_delta_xgb.joblib"
             end_path = model_root / "regressor" / "effort_end_delta_xgb.joblib"
-            _fit_and_save_regressor(effort_pos, effort_features, "start_delta_sec", start_path)
-            _fit_and_save_regressor(effort_pos, effort_features, "end_delta_sec", end_path)
+            effort_start_importance = _fit_and_save_regressor(effort_pos, effort_features, "start_delta_sec", start_path)
+            effort_end_importance = _fit_and_save_regressor(effort_pos, effort_features, "end_delta_sec", end_path)
             saved_files.extend([str(start_path), str(end_path)])
+            metrics["feature_importance"]["effort_start_regressor"] = effort_start_importance
+            metrics["feature_importance"]["effort_end_regressor"] = effort_end_importance
         else:
             metrics["effort_regressor_loso"] = {"start_delta_mae": None, "end_delta_mae": None}
 
@@ -192,8 +222,9 @@ def train_from_frames(
         metrics["sprint_classifier_loso"] = sprint_cls_metrics
 
         sprint_cls_path = model_root / "classifier" / "sprint_keep_xgb.joblib"
-        _fit_and_save_classifier(sprint_df, sprint_features, "keep_label", sprint_cls_path)
+        sprint_cls_importance = _fit_and_save_classifier(sprint_df, sprint_features, "keep_label", sprint_cls_path)
         saved_files.append(str(sprint_cls_path))
+        metrics["feature_importance"]["sprint_classifier"] = sprint_cls_importance
 
         sprint_pos = sprint_df[sprint_df["keep_label"] == 1].copy()
         if len(sprint_pos) >= 5:
@@ -203,9 +234,11 @@ def train_from_frames(
 
             start_path = model_root / "regressor" / "sprint_start_delta_xgb.joblib"
             end_path = model_root / "regressor" / "sprint_end_delta_xgb.joblib"
-            _fit_and_save_regressor(sprint_pos, sprint_features, "start_delta_sec", start_path)
-            _fit_and_save_regressor(sprint_pos, sprint_features, "end_delta_sec", end_path)
+            sprint_start_importance = _fit_and_save_regressor(sprint_pos, sprint_features, "start_delta_sec", start_path)
+            sprint_end_importance = _fit_and_save_regressor(sprint_pos, sprint_features, "end_delta_sec", end_path)
             saved_files.extend([str(start_path), str(end_path)])
+            metrics["feature_importance"]["sprint_start_regressor"] = sprint_start_importance
+            metrics["feature_importance"]["sprint_end_regressor"] = sprint_end_importance
         else:
             metrics["sprint_regressor_loso"] = {"start_delta_mae": None, "end_delta_mae": None}
 
