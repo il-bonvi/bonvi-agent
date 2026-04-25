@@ -1,0 +1,340 @@
+{
+  "metrics": {
+    "by_activity": {
+      "road": {
+        "data_diagnostics": {
+          "effort_class_stats": {
+            "rows": 95,
+            "positives": 78,
+            "negatives": 17,
+            "pos_ratio": 0.8210526315789474,
+            "n_classes": 2
+          },
+          "sprint_class_stats": {
+            "rows": 13,
+            "positives": 11,
+            "negatives": 2,
+            "pos_ratio": 0.8461538461538461,
+            "n_classes": 2
+          }
+        },
+        "feature_importance": {
+          "effort_classifier": [
+            {
+              "feature": "gold_overlap_count",
+              "importance": 0.3355049192905426
+            },
+            {
+              "feature": "max_overlap_ratio",
+              "importance": 0.1262385994195938
+            },
+            {
+              "feature": "weight",
+              "importance": 0.10932870209217072
+            },
+            {
+              "feature": "max_power_ratio",
+              "importance": 0.08332514017820358
+            },
+            {
+              "feature": "extend_before_power_ratio",
+              "importance": 0.06669702380895615
+            },
+            {
+              "feature": "overlap_count",
+              "importance": 0.039611056447029114
+            },
+            {
+              "feature": "valley_time_ratio",
+              "importance": 0.028202740475535393
+            },
+            {
+              "feature": "start_ratio",
+              "importance": 0.027045777067542076
+            },
+            {
+              "feature": "end_ratio",
+              "importance": 0.026327021420001984
+            },
+            {
+              "feature": "trim_start_power_ratio",
+              "importance": 0.026300592347979546
+            },
+            {
+              "feature": "valley_max_dur_sec",
+              "importance": 0.02055366151034832
+            },
+            {
+              "feature": "duration_sec",
+              "importance": 0.01897011511027813
+            }
+          ],
+          "effort_start_regressor": [
+            {
+              "feature": "gold_overlap_count",
+              "importance": 0.3887379467487335
+            },
+            {
+              "feature": "valley_count",
+              "importance": 0.17391979694366455
+            },
+            {
+              "feature": "end_ratio",
+              "importance": 0.1117752343416214
+            },
+            {
+              "feature": "extend_before_power_ratio",
+              "importance": 0.07787596434354782
+            },
+            {
+              "feature": "valley_max_dur_sec",
+              "importance": 0.06092837080359459
+            },
+            {
+              "feature": "avg_30_ratio",
+              "importance": 0.03201441839337349
+            },
+            {
+              "feature": "max_power_ratio",
+              "importance": 0.027250485494732857
+            },
+            {
+              "feature": "start_ratio",
+              "importance": 0.01679546944797039
+            },
+            {
+              "feature": "valley_time_ratio",
+              "importance": 0.016608262434601784
+            },
+            {
+              "feature": "duration_sec",
+              "importance": 0.015764562413096428
+            },
+            {
+              "feature": "trim_end_power_ratio",
+              "importance": 0.01573929376900196
+            },
+            {
+              "feature": "extend_after_power_ratio",
+              "importance": 0.013651269488036633
+            }
+          ],
+          "effort_end_regressor": [
+            {
+              "feature": "max_overlap_ratio",
+              "importance": 0.2544861435890198
+            },
+            {
+              "feature": "gold_overlap_count",
+              "importance": 0.20252572000026703
+            },
+            {
+              "feature": "valley_count",
+              "importance": 0.15212088823318481
+            },
+            {
+              "feature": "avg_power_ratio",
+              "importance": 0.09546025097370148
+            },
+            {
+              "feature": "valley_max_dur_sec",
+              "importance": 0.05564247444272041
+            },
+            {
+              "feature": "duration_sec",
+              "importance": 0.04979940131306648
+            },
+            {
+              "feature": "overlap_count",
+              "importance": 0.04968470707535744
+            },
+            {
+              "feature": "extend_after_power_ratio",
+              "importance": 0.029015252366662025
+            },
+            {
+              "feature": "start_ratio",
+              "importance": 0.02299158275127411
+            },
+            {
+              "feature": "trim_start_power_ratio",
+              "importance": 0.02279212325811386
+            },
+            {
+              "feature": "avg_60_ratio",
+              "importance": 0.015860380604863167
+            },
+            {
+              "feature": "end_ratio",
+              "importance": 0.014012157917022705
+            }
+          ],
+          "sprint_classifier": [
+            {
+              "feature": "cp",
+              "importance": 0.0
+            },
+            {
+              "feature": "weight",
+              "importance": 0.0
+            },
+            {
+              "feature": "duration_sec",
+              "importance": 0.0
+            },
+            {
+              "feature": "avg_power_ratio",
+              "importance": 0.0
+            },
+            {
+              "feature": "sprint_min_power_ratio",
+              "importance": 0.0
+            },
+            {
+              "feature": "sprint_window_seconds",
+              "importance": 0.0
+            },
+            {
+              "feature": "sprint_merge_gap_sec",
+              "importance": 0.0
+            },
+            {
+              "feature": "start_idx",
+              "importance": 0.0
+            },
+            {
+              "feature": "end_idx",
+              "importance": 0.0
+            }
+          ],
+          "sprint_start_regressor": [
+            {
+              "feature": "start_idx",
+              "importance": 0.3697587251663208
+            },
+            {
+              "feature": "avg_power_ratio",
+              "importance": 0.32868871092796326
+            },
+            {
+              "feature": "duration_sec",
+              "importance": 0.19762566685676575
+            },
+            {
+              "feature": "weight",
+              "importance": 0.10391100496053696
+            },
+            {
+              "feature": "end_idx",
+              "importance": 1.591894579178188e-05
+            },
+            {
+              "feature": "cp",
+              "importance": 0.0
+            },
+            {
+              "feature": "sprint_min_power_ratio",
+              "importance": 0.0
+            },
+            {
+              "feature": "sprint_window_seconds",
+              "importance": 0.0
+            },
+            {
+              "feature": "sprint_merge_gap_sec",
+              "importance": 0.0
+            }
+          ],
+          "sprint_end_regressor": [
+            {
+              "feature": "duration_sec",
+              "importance": 0.7440873980522156
+            },
+            {
+              "feature": "start_idx",
+              "importance": 0.14268261194229126
+            },
+            {
+              "feature": "avg_power_ratio",
+              "importance": 0.08268661797046661
+            },
+            {
+              "feature": "end_idx",
+              "importance": 0.024358123540878296
+            },
+            {
+              "feature": "weight",
+              "importance": 0.006185246631503105
+            },
+            {
+              "feature": "cp",
+              "importance": 0.0
+            },
+            {
+              "feature": "sprint_min_power_ratio",
+              "importance": 0.0
+            },
+            {
+              "feature": "sprint_window_seconds",
+              "importance": 0.0
+            },
+            {
+              "feature": "sprint_merge_gap_sec",
+              "importance": 0.0
+            }
+          ]
+        },
+        "training_notes": [],
+        "effort_classifier_loso": {
+          "accuracy": 0.9157894736842105,
+          "precision": 0.9166666666666666,
+          "recall": 0.9871794871794872,
+          "f1": 0.9506172839506173
+        },
+        "effort_regressor_loso": {
+          "start_delta_mae": 12.461898250257393,
+          "end_delta_mae": 14.016557315462984
+        },
+        "sprint_classifier_loso": {
+          "accuracy": 0.8461538461538461,
+          "precision": 0.8461538461538461,
+          "recall": 1.0,
+          "f1": 0.9166666666666666
+        },
+        "sprint_regressor_loso": {
+          "start_delta_mae": 3.9388017532764934,
+          "end_delta_mae": 4.068198619839677
+        }
+      }
+    },
+    "training_notes": [],
+    "effort_classifier_loso": {
+      "accuracy": 0.9157894736842105,
+      "precision": 0.9166666666666666,
+      "recall": 0.9871794871794872,
+      "f1": 0.9506172839506173
+    },
+    "effort_regressor_loso": {
+      "start_delta_mae": 12.461898250257393,
+      "end_delta_mae": 14.016557315462984
+    },
+    "sprint_classifier_loso": {
+      "accuracy": 0.8461538461538461,
+      "precision": 0.8461538461538461,
+      "recall": 1.0,
+      "f1": 0.9166666666666666
+    },
+    "sprint_regressor_loso": {
+      "start_delta_mae": 3.9388017532764934,
+      "end_delta_mae": 4.068198619839677
+    }
+  },
+  "saved_files": [
+    "models\\road\\classifier\\effort_keep_xgb.joblib",
+    "models\\road\\regressor\\effort_start_delta_xgb.joblib",
+    "models\\road\\regressor\\effort_end_delta_xgb.joblib",
+    "models\\road\\classifier\\sprint_keep_xgb.joblib",
+    "models\\road\\regressor\\sprint_start_delta_xgb.joblib",
+    "models\\road\\regressor\\sprint_end_delta_xgb.joblib"
+  ]
+}
