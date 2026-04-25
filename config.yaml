@@ -1,0 +1,22 @@
+# Config tecnico del progetto.
+# Nessun valore standard per CP, peso, activity_type o soglie numeriche.
+# I parametri session-specific devono essere tracciati nei JSON sessione.
+
+project:
+  name: effort-agent
+  data_root: data/archive
+  processed_root: data/processed
+
+io:
+  output_suffix_default: _default.json
+  output_suffix_gold: _gold.json
+  ignore_files:
+    - effort_modifications.json
+
+logging:
+  level: INFO
+
+models:
+  classifier_dir: models/classifier
+  regressor_dir: models/regressor
+  frame_dir: models/frame

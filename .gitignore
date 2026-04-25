@@ -1,0 +1,21 @@
+# Local Python env and caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# VS Code and OS noise
+.vscode/
+.DS_Store
+Thumbs.db
+
+# User-local external tool repo
+PEFFORT/
+
+# Local training data (provided manually)
+data/archive/
+
+# Generated artifacts
+data/processed/
+models/**/*.joblib
+models/training_metrics.json
