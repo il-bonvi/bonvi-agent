@@ -1,24 +1,24 @@
 # Training Summary
 
-- Timestamp UTC: 2026-04-25T18:29:54.128974+00:00
-- Sessions: 5
-- Effort rows: 95
-- Sprint rows: 13
+- Timestamp UTC: 2026-04-27T15:03:44.128447+00:00
+- Sessions: 7
+- Effort rows: 132
+- Sprint rows: 19
 
 ## Effort
-- Accuracy: 91.6%
-- F1: 95.1%
-- Start delta MAE (s): 12.46
-- End delta MAE (s): 14.02
+- Accuracy: 93.9%
+- F1: 95.8%
+- Start delta MAE (s): 10.50
+- End delta MAE (s): 14.78
 
 ## Sprint
-- Accuracy: 84.6%
-- F1: 91.7%
-- Start delta MAE (s): 3.94
-- End delta MAE (s): 4.07
+- Accuracy: 78.9%
+- F1: 88.2%
+- Start delta MAE (s): 4.76
+- End delta MAE (s): 4.88
 
 ## Modelli Per Activity Type
 
 ### road
-- Effort pos/neg: 78/17
-- Sprint pos/neg: 11/2
+- Effort pos/neg: 93/39
+- Sprint pos/neg: 16/3

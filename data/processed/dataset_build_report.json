@@ -1,6 +1,8 @@
 {
-  "sessions_used": 5,
-  "effort_rows": 95,
-  "sprint_rows": 13,
-  "warnings": []
+  "sessions_used": 7,
+  "effort_rows": 132,
+  "sprint_rows": 19,
+  "warnings": [
+    "data\\archive\\Maser 2026\\MF: session_id mismatch between default and gold"
+  ]
 }
