@@ -1,8 +1,21 @@
 {
-  "sessions_used": 7,
-  "effort_rows": 132,
-  "sprint_rows": 19,
+  "sessions_used": 23,
+  "effort_rows": 697,
+  "sprint_rows": 42,
   "warnings": [
-    "data\\archive\\Maser 2026\\MF: session_id mismatch between default and gold"
+    "data\\archive\\Castellania 2026\\CLA: session_id mismatch between default and gold",
+    "data\\archive\\Castellania 2026\\OM: session_id mismatch between default and gold",
+    "data\\archive\\Castellania 2026 NEW\\CLA: session_id mismatch between default and gold",
+    "data\\archive\\Castellania 2026 NEW\\OM: session_id mismatch between default and gold",
+    "data\\archive\\Castellania 2026 NEW\\ROS: session_id mismatch between default and gold",
+    "data\\archive\\Ghost Recon: session_id mismatch between default and gold",
+    "data\\archive\\Gossolengo 2026\\OM: session_id mismatch between default and gold",
+    "data\\archive\\LIEGI Puck: session_id mismatch between default and gold",
+    "data\\archive\\Maser 2026\\MF: session_id mismatch between default and gold",
+    "data\\archive\\OFFIDA 2025: session_id mismatch between default and gold",
+    "data\\archive\\offida2026\\aga: session_id mismatch between default and gold",
+    "data\\archive\\offida2026\\bianchi: session_id mismatch between default and gold",
+    "data\\archive\\offida2026\\cla: session_id mismatch between default and gold",
+    "data\\archive\\offida2026\\marti: session_id mismatch between default and gold"
   ]
 }

@@ -1,4 +1,14 @@
 ﻿session_id;stem;folder;activity_type;cp;weight;duration_sec;avg_power_ratio;sprint_min_power_ratio;sprint_window_seconds;sprint_merge_gap_sec;start_idx;end_idx;keep_label;start_delta_sec;end_delta_sec
+86193d82-fa95-4ddf-ac20-70c2c8bf075b;i138874732_Giro_della_Castellania;data\archive\Castellania 2026\CLA;road;250.0;64.0;7.0;2.13;2.0;5.0;3.0;2569;2577;0;0.0;0.0
+86193d82-fa95-4ddf-ac20-70c2c8bf075b;i138874732_Giro_della_Castellania;data\archive\Castellania 2026\CLA;road;250.0;64.0;5.0;2.3073333333333337;2.0;5.0;3.0;6898;6904;0;0.0;0.0
+49cbaa8f-76eb-4a51-b6c1-3aaeaaf9491b;Castellania;data\archive\Castellania 2026\OM;road;250.0;60.0;5.0;2.6746666666666665;2.0;5.0;3.0;2871;2877;1;-1.0;0.0
+49cbaa8f-76eb-4a51-b6c1-3aaeaaf9491b;Castellania;data\archive\Castellania 2026\OM;road;250.0;60.0;7.0;2.596;2.0;5.0;3.0;3106;3114;1;-1.0;0.0
+49cbaa8f-76eb-4a51-b6c1-3aaeaaf9491b;Castellania;data\archive\Castellania 2026\OM;road;250.0;60.0;8.0;2.7373333333333334;2.0;5.0;3.0;3256;3265;1;0.0;0.0
+2127bbd5-5bf1-4db8-8491-21156df73f1d;i138874732_Giro_della_Castellania;data\archive\Castellania 2026 NEW\CLA;road;250.0;64.0;7.0;2.13;2.0;5.0;3.0;2569;2577;0;0.0;0.0
+2127bbd5-5bf1-4db8-8491-21156df73f1d;i138874732_Giro_della_Castellania;data\archive\Castellania 2026 NEW\CLA;road;250.0;64.0;5.0;2.3073333333333337;2.0;5.0;3.0;6898;6904;0;0.0;0.0
+09a26906-174f-4aa3-a122-b3f8a0e4b6f0;Castellania;data\archive\Castellania 2026 NEW\OM;road;250.0;60.0;5.0;2.6746666666666665;2.0;5.0;3.0;2871;2877;1;-1.0;0.0
+09a26906-174f-4aa3-a122-b3f8a0e4b6f0;Castellania;data\archive\Castellania 2026 NEW\OM;road;250.0;60.0;7.0;2.596;2.0;5.0;3.0;3106;3114;1;-1.0;0.0
+09a26906-174f-4aa3-a122-b3f8a0e4b6f0;Castellania;data\archive\Castellania 2026 NEW\OM;road;250.0;60.0;8.0;2.7373333333333334;2.0;5.0;3.0;3256;3265;1;0.0;0.0
 312f98e6-0bbd-419d-a5a2-0a5c3a970ca7;ros CIT;data\archive\Cittiglio 2026\ROS;road;235.0;53.0;5.0;2.375177304964539;2.127659574468085;5.0;3.0;1773;1779;1;0.0;0.0
 312f98e6-0bbd-419d-a5a2-0a5c3a970ca7;ros CIT;data\archive\Cittiglio 2026\ROS;road;235.0;53.0;5.0;2.432624113475177;2.127659574468085;5.0;3.0;3383;3389;0;0.0;0.0
 312f98e6-0bbd-419d-a5a2-0a5c3a970ca7;ros CIT;data\archive\Cittiglio 2026\ROS;road;235.0;53.0;5.0;2.288652482269504;2.127659574468085;5.0;3.0;6013;6019;1;0.0;0.0
@@ -10,8 +20,21 @@
 2aeeb762-3e5c-4fd3-acf0-003ec0093e0c;Fossano_2025;data\archive\Fossano 2025\AGA;road;235.0;60.0;22.0;3.1914893617021276;2.127659574468085;5.0;3.0;7797;7820;1;0.0;0.0
 fb70343f-6980-4496-a564-28ef2e16e44b;Fossano;data\archive\Fossano 2026\AGA;road;235.0;60.0;5.0;2.3574468085106384;2.127659574468085;5.0;3.0;5186;5192;0;0.0;0.0
 fb70343f-6980-4496-a564-28ef2e16e44b;Fossano;data\archive\Fossano 2026\AGA;road;235.0;60.0;15.0;3.503191489361702;2.127659574468085;5.0;3.0;8465;8481;1;0.0;0.0
+d2f3ff73-d2fd-439e-b1a8-eae73edaaeb3;ghost recon;data\archive\Ghost Recon;road;320.0;89.0;15.0;2.955859375;2.5;5.0;3.0;10445;10461;0;0.0;0.0
+d2f3ff73-d2fd-439e-b1a8-eae73edaaeb3;ghost recon;data\archive\Ghost Recon;road;320.0;89.0;13.0;3.9270089285714285;2.5;5.0;3.0;13554;13568;1;0.0;0.0
+d2f3ff73-d2fd-439e-b1a8-eae73edaaeb3;ghost recon;data\archive\Ghost Recon;road;320.0;89.0;7.0;2.74296875;2.5;5.0;3.0;17870;17878;0;0.0;0.0
+d2f3ff73-d2fd-439e-b1a8-eae73edaaeb3;ghost recon;data\archive\Ghost Recon;road;320.0;89.0;6.0;3.0714285714285716;2.5;5.0;3.0;18034;18041;1;0.0;0.0
+0c7ce90e-ed18-4ec5-aa64-8e50822bbbd0;i141095172_Gossolengo;data\archive\Gossolengo 2026\AGA;road;235.0;60.0;8.0;2.6444444444444444;2.127659574468085;5.0;3.0;8111;8120;1;0.0;0.0
+765659e6-5aed-447b-92dd-8dad233ebe18;i141096579_Gossolengo;data\archive\Gossolengo 2026\OM;road;250.0;60.0;5.0;2.57;2.0;5.0;3.0;804;810;1;0.0;8.0
+765659e6-5aed-447b-92dd-8dad233ebe18;i141096579_Gossolengo;data\archive\Gossolengo 2026\OM;road;250.0;60.0;6.0;2.2394285714285718;2.0;5.0;3.0;7324;7331;1;0.0;0.0
 7797cef2-d600-4e7a-b895-666fbf05fbee;i141137178_Gossolengo;data\archive\Gossolengo 2026\ROS;road;235.0;53.0;7.0;2.3468085106382977;2.127659574468085;5.0;3.0;3638;3646;1;-12.0;0.0
 7797cef2-d600-4e7a-b895-666fbf05fbee;i141137178_Gossolengo;data\archive\Gossolengo 2026\ROS;road;235.0;53.0;9.0;2.8306382978723406;2.127659574468085;5.0;3.0;8067;8077;1;0.0;0.0
+3bfd3314-0d5f-47f2-8bb2-fd1e3823e556;i143632450;data\archive\LIEGI Puck;road;280.0;55.0;10.0;2.4279220779220783;1.7857142857142858;5.0;3.0;11035;11046;1;0.0;0.0
+3bfd3314-0d5f-47f2-8bb2-fd1e3823e556;i143632450;data\archive\LIEGI Puck;road;280.0;55.0;7.0;2.585714285714286;1.7857142857142858;5.0;3.0;11428;11436;1;0.0;0.0
+3bfd3314-0d5f-47f2-8bb2-fd1e3823e556;i143632450;data\archive\LIEGI Puck;road;280.0;55.0;7.0;2.275892857142857;1.7857142857142858;5.0;3.0;12053;12061;1;0.0;0.0
+3bfd3314-0d5f-47f2-8bb2-fd1e3823e556;i143632450;data\archive\LIEGI Puck;road;280.0;55.0;6.0;1.85;1.7857142857142858;5.0;3.0;12322;12329;0;0.0;0.0
+3bfd3314-0d5f-47f2-8bb2-fd1e3823e556;i143632450;data\archive\LIEGI Puck;road;280.0;55.0;5.0;2.4714285714285715;1.7857142857142858;5.0;3.0;15400;15406;1;0.0;0.0
+3bfd3314-0d5f-47f2-8bb2-fd1e3823e556;i143632450;data\archive\LIEGI Puck;road;280.0;55.0;14.0;2.8342857142857145;1.7857142857142858;5.0;3.0;15539;15554;1;0.0;0.0
 d42bc166-9a8f-431d-958e-d9ddc23a4899;Maser;data\archive\Maser 2026\BIANCHI;road;250.0;58.0;5.0;2.8266666666666667;2.0;5.0;3.0;2484;2490;1;0.0;0.0
 d42bc166-9a8f-431d-958e-d9ddc23a4899;Maser;data\archive\Maser 2026\BIANCHI;road;250.0;58.0;5.0;2.604;2.0;5.0;3.0;3040;3046;1;0.0;0.0
 d42bc166-9a8f-431d-958e-d9ddc23a4899;Maser;data\archive\Maser 2026\BIANCHI;road;250.0;58.0;11.0;3.534;2.0;5.0;3.0;6494;6506;1;-1.0;0.0
